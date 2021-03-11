@@ -8,32 +8,47 @@ import (
 	"itib/lab1/utils"
 )
 
-type Neuron struct {
-	activationFunction ActivationFunction
-	derivative Derivative
-	teachingRate float64
-
-	weights []float64
-	target []uint8
-
-	sets [][]uint8
-	variablesQuantity uint8
-
-	writer io.Writer
+// Интерфейс для различных ФА с необходимыми двумя методами
+// Вычисление ФА и ее производной
+type ActivationFunction interface {
+	Activate(float64) uint8
+	Derivative([]float64, []uint8) float64
 }
 
+// Основная структура нейрона
+/*
+ * activationFunction - интерфейс для ФА
+ * teachingRate - норма обучения
+ * weights - вектор весов
+ * target - вектор значений целевой функции
+ * sets - все возможные наборы входных значений для БФ
+ * variablesQuantity - кол-во переменных
+ * writer - интерфейс для логирования: консоль либо файл
+ */
+type Neuron struct {
+	activationFunction ActivationFunction
+	teachingRate       float64
+	weights            []float64
+
+	target             []uint8
+	sets               [][]uint8
+	variablesQuantity  uint8
+
+	writer             io.Writer
+}
+
+// Функция создания объекта структуры Neuron
 func CreateNeuron(function ActivationFunction, weights []float64,
-	teachRate float64, target []uint8, varsQuantity uint8, derivative Derivative, writer io.Writer) *Neuron {
+	teachRate float64, target []uint8, varsQuantity uint8, writer io.Writer) *Neuron {
 	sets := utils.MakeAllSets(varsQuantity)
 	return &Neuron{
 		activationFunction: function,
 		weights:            weights,
 		teachingRate:       teachRate,
 		target:             target,
-		sets: sets,
-		variablesQuantity: varsQuantity,
-		writer: writer,
-		derivative: derivative,
+		sets:               sets,
+		variablesQuantity:  varsQuantity,
+		writer:             writer,
 	}
 }
 
@@ -41,30 +56,35 @@ func (n *Neuron) SetOutput(writer io.Writer) {
 	n.writer = writer
 }
 
+// Вычисление ФА
 func (n *Neuron) getActivationFunction(set []uint8) uint8 {
 	net := n.weights[0]
 	for i, weight := range n.weights[1:] {
 		net += weight * float64(set[i])
 	}
-	return n.activationFunction.Result(net)
+	return n.activationFunction.Activate(net)
 }
 
-func (n * Neuron) calculateFunctionVector() []uint8 {
+// Вычисление выходного вектора
+func (n *Neuron) calculateFunctionVector() []uint8 {
 	vector := make([]uint8, 0, len(n.target))
-	for i := 0; i < 1 << n.variablesQuantity; i++ {
+	for i := 0; i < 1<<n.variablesQuantity; i++ {
 		value := n.getActivationFunction(n.sets[i])
 		vector = append(vector, value)
 	}
 	return vector
 }
 
+// Функция для логирования промежуточных результатов
 func (n *Neuron) PrintInfo(epoch uint16, err uint8, out []uint8) {
 	info := fmt.Sprintf("Эпоха № %d. Выходной вектор: %v. Вектор весов: %.3f. Суммарная ошибка: %d",
 		epoch, out, n.weights, err)
 	fmt.Fprintln(n.writer, info)
 }
 
+// Обучение нейрона
 func (n *Neuron) Train(epochs uint16, isPartly bool, graphicName string, sets ...[]uint8) bool {
+	// Точки для создания графика
 	xPoints := make([]float64, 0, epochs)
 	yPoints := make([]float64, 0, len(n.target))
 
@@ -75,6 +95,7 @@ func (n *Neuron) Train(epochs uint16, isPartly bool, graphicName string, sets ..
 		xPoints = append(xPoints, float64(epoch))
 		yPoints = append(yPoints, float64(err))
 
+		// Флаг помогает избежать лишнего логирования в случае с нахождением минимального набора
 		if !isPartly {
 			n.PrintInfo(epoch, err, vector)
 		}
@@ -86,6 +107,8 @@ func (n *Neuron) Train(epochs uint16, isPartly bool, graphicName string, sets ..
 			p.DrawGraph(xPoints, yPoints, len(xPoints), graphicName, 100, 10, 255)
 			return true
 		}
+
+		// Если наборы, на которых необходимо обучаться, не заданы, берутся все возможные
 		var teachSet [][]uint8
 		if len(sets) == 0 {
 			teachSet = n.sets
@@ -94,12 +117,13 @@ func (n *Neuron) Train(epochs uint16, isPartly bool, graphicName string, sets ..
 		}
 		for i := 0; i < 5; i++ {
 			for j := 0; j < len(teachSet); j++ {
+				// Вычисление deltaW
 				if i == 0 {
 					n.weights[i] += n.teachingRate * (float64(n.target[j]) - float64(vector[j])) *
-						n.derivative.Result(n.weights, teachSet[j])
+						n.activationFunction.Derivative(n.weights, teachSet[j])
 				} else {
 					n.weights[i] += n.teachingRate * (float64(n.target[j]) - float64(vector[j])) *
-						float64(teachSet[j][i-1]) * n.derivative.Result(n.weights, teachSet[j])
+						float64(teachSet[j][i-1]) * n.activationFunction.Derivative(n.weights, teachSet[j])
 				}
 			}
 		}
@@ -107,6 +131,7 @@ func (n *Neuron) Train(epochs uint16, isPartly bool, graphicName string, sets ..
 	return false
 }
 
+// Функция для обучения на неполной выборке
 func (n *Neuron) TrainPartly(epochs uint16, graphicName string) bool {
 	for i := 2; i < 16; i++ {
 		setCombinations := combinations.Combinations(n.sets, i)
@@ -115,18 +140,10 @@ func (n *Neuron) TrainPartly(epochs uint16, graphicName string) bool {
 			result := n.Train(100, true, graphicName, setCombination...)
 			if result {
 				n.weights = []float64{0.0, 0.0, 0.0, 0.0, 0.0}
-				n.Train(100, false, graphicName, setCombination...)
+				n.Train(epochs, false, graphicName, setCombination...)
 				return true
 			}
 		}
 	}
 	return false
-}
-
-type ActivationFunction interface {
-	Result(float64) uint8
-}
-
-type Derivative interface {
-	Result([]float64, []uint8) float64
 }

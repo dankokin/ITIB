@@ -1,7 +1,7 @@
 package utils
 
 func MakeAllSets(variablesQuantity uint8) [][]uint8 {
-	sets := make([][]uint8, 1 << variablesQuantity)
+	sets := make([][]uint8, 1<<variablesQuantity)
 	for i := range sets {
 		set := fromNumberToBinaryArray(i, variablesQuantity)
 		sets[i] = set
@@ -12,7 +12,7 @@ func MakeAllSets(variablesQuantity uint8) [][]uint8 {
 func fromNumberToBinaryArray(number int, arrayLength uint8) []uint8 {
 	set := make([]uint8, arrayLength)
 	for i := range set {
-		set[len(set) - 1 - i] = uint8(number % 2)
+		set[len(set)-1-i] = uint8(number % 2)
 		number /= 2
 	}
 	return set

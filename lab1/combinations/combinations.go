@@ -4,7 +4,6 @@ import (
 	"math/bits"
 )
 
-
 func Combinations(set [][]uint8, n int) (subsets [][][]uint8) {
 	length := uint(len(set))
 

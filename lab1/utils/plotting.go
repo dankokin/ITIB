@@ -21,8 +21,8 @@ func (p *Plotter) DrawGraph(xPoints []float64, yPoints []float64, k int, filenam
 	r uint8, g uint8, b uint8) {
 	p.plot = plot.New()
 	p.plot.Title.Text = "Зависимость суммарной ошибки от количества эпох"
-	p.plot.X.Label.Text = "Количество эпох"
-	p.plot.Y.Label.Text = "Суммарная ошибка"
+	p.plot.X.Label.Text = "K, количество эпох"
+	p.plot.Y.Label.Text = "E, суммарная ошибка"
 
 	l, err := plotter.NewLine(funcPoints(xPoints, yPoints, k))
 	if err != nil {
@@ -31,7 +31,7 @@ func (p *Plotter) DrawGraph(xPoints []float64, yPoints []float64, k int, filenam
 	}
 	l.LineStyle.Color = color.RGBA{R: r, G: g, B: b, A: 255}
 	p.plot.Add(l)
-	if err := p.plot.Save(10 * vg.Inch, 8 * vg.Inch, filename); err != nil {
+	if err := p.plot.Save(10*vg.Inch, 8*vg.Inch, filename); err != nil {
 		fmt.Println(err)
 		return
 	}

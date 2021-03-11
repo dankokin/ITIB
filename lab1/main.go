@@ -10,21 +10,13 @@ import (
 	"itib/lab1/neuron"
 )
 
-
-type thresholdDerivativeFunction struct {
-}
-
-func (td *thresholdDerivativeFunction) Result (w []float64, set []uint8) float64 {
-	return 1
-}
-
-type sigmoidDerivativeFunction struct {
-}
-
 type thresholdActivationFunction struct {
 }
 
-func (t *thresholdActivationFunction) Result(net float64) uint8 {
+func (t *thresholdActivationFunction) Derivative(w []float64, set []uint8) float64 {
+	return 1
+}
+func (t *thresholdActivationFunction) Activate(net float64) uint8 {
 	if net >= 0 {
 		return 1
 	} else {
@@ -35,7 +27,7 @@ func (t *thresholdActivationFunction) Result(net float64) uint8 {
 type sigmoidActivationFunction struct {
 }
 
-func (s *sigmoidActivationFunction) Result(net float64) uint8 {
+func (s *sigmoidActivationFunction) Activate(net float64) uint8 {
 	if net >= 0.5 {
 		return 1
 	} else {
@@ -43,7 +35,7 @@ func (s *sigmoidActivationFunction) Result(net float64) uint8 {
 	}
 }
 
-func (sd *sigmoidDerivativeFunction) Result (w []float64, set []uint8) float64 {
+func (s *sigmoidActivationFunction) Derivative(w []float64, set []uint8) float64 {
 	net := w[0]
 	for i := range w[1:] {
 		net += w[i] * float64(set[i])
@@ -69,25 +61,21 @@ func main() {
 
 	fmt.Fprintln(output, "Задание 1. Обучение с пороговой функцией активации")
 	var thresholdActivationFunction thresholdActivationFunction
-	var thresholdDerivativeFunction thresholdDerivativeFunction
 	neuronWithThresholdActivationFunctions := neuron.CreateNeuron(&thresholdActivationFunction,
 		[]float64{0.0, 0.0, 0.0, 0.0, 0.0},
 		0.3,
 		[]uint8{0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 		4,
-		&thresholdDerivativeFunction,
 		output)
 	neuronWithThresholdActivationFunctions.Train(100, false, "results/neuronWithThresholdActivationFunctions.png")
 
 	fmt.Fprintln(output, "\nЗадание 2. Обучение с сигмоидальной функцией активации")
 	var sigmoidActivationFunction sigmoidActivationFunction
-	var sigmoidDerivativeFunction sigmoidDerivativeFunction
 	neuronWithSigmoidFunctions := neuron.CreateNeuron(&sigmoidActivationFunction,
 		[]float64{0.0, 0.0, 0.0, 0.0, 0.0},
 		0.3,
 		[]uint8{0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 		4,
-		&sigmoidDerivativeFunction,
 		output)
 	neuronWithSigmoidFunctions.Train(100, false, "results/neuronWithSigmoidFunctions.png")
 
@@ -97,7 +85,6 @@ func main() {
 		0.3,
 		[]uint8{0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 		4,
-		&sigmoidDerivativeFunction,
 		output)
 	neuronWithPartlyLearning.TrainPartly(100, "results/neuronWithPartlyLearning.png")
 }
