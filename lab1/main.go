@@ -37,8 +37,8 @@ func (s *sigmoidActivationFunction) Activate(net float64) uint8 {
 
 func (s *sigmoidActivationFunction) Derivative(w []float64, set []uint8) float64 {
 	net := w[0]
-	for i := range w[1:] {
-		net += w[i] * float64(set[i])
+	for i, weight := range w[1:] {
+		net += weight * float64(set[i])
 	}
 	return 1 / (2 * math.Pow(math.Cos(net), 2))
 }
@@ -87,4 +87,5 @@ func main() {
 		4,
 		output)
 	neuronWithPartlyLearning.TrainPartly(100, "results/neuronWithPartlyLearning.png")
+
 }

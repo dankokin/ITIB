@@ -68,7 +68,7 @@ func (n *Neuron) getActivationFunction(set []uint8) uint8 {
 // Вычисление выходного вектора
 func (n *Neuron) calculateFunctionVector() []uint8 {
 	vector := make([]uint8, 0, len(n.target))
-	for i := 0; i < 1<<n.variablesQuantity; i++ {
+	for i := 0; i < len(n.target); i++ {
 		value := n.getActivationFunction(n.sets[i])
 		vector = append(vector, value)
 	}
@@ -87,6 +87,14 @@ func (n *Neuron) Train(epochs uint16, isPartly bool, graphicName string, sets ..
 	// Точки для создания графика
 	xPoints := make([]float64, 0, epochs)
 	yPoints := make([]float64, 0, len(n.target))
+
+	// Если наборы, на которых необходимо обучаться, не заданы, берутся все возможные
+	var teachSet [][]uint8
+	if len(sets) == 0 {
+		teachSet = n.sets
+	} else {
+		teachSet = sets
+	}
 
 	for epoch := uint16(0); epoch < epochs; epoch++ {
 		vector := n.calculateFunctionVector()
@@ -108,22 +116,15 @@ func (n *Neuron) Train(epochs uint16, isPartly bool, graphicName string, sets ..
 			return true
 		}
 
-		// Если наборы, на которых необходимо обучаться, не заданы, берутся все возможные
-		var teachSet [][]uint8
-		if len(sets) == 0 {
-			teachSet = n.sets
-		} else {
-			teachSet = sets
-		}
-		for i := 0; i < 5; i++ {
-			for j := 0; j < len(teachSet); j++ {
-				// Вычисление deltaW
-				if i == 0 {
-					n.weights[i] += n.teachingRate * (float64(n.target[j]) - float64(vector[j])) *
-						n.activationFunction.Derivative(n.weights, teachSet[j])
+		for i := 0; i < len(teachSet); i++ {
+			y := n.getActivationFunction(teachSet[i])
+			for j := uint8(0); j < n.variablesQuantity + 1; j++ {
+				if j == 0 {
+					n.weights[j] += n.teachingRate * (float64(n.target[i]) - float64(y))
 				} else {
-					n.weights[i] += n.teachingRate * (float64(n.target[j]) - float64(vector[j])) *
-						float64(teachSet[j][i-1]) * n.activationFunction.Derivative(n.weights, teachSet[j])
+					n.weights[j] += n.teachingRate * (float64(n.target[i]) - float64(y)) *
+						n.activationFunction.Derivative(n.weights, teachSet[i]) *
+							float64(teachSet[i][j-1])
 				}
 			}
 		}
