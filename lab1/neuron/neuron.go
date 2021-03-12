@@ -148,3 +148,7 @@ func (n *Neuron) TrainPartly(epochs uint16, graphicName string) bool {
 	}
 	return false
 }
+
+func (n *Neuron) GetWeights() []float64 {
+	return n.weights
+}
