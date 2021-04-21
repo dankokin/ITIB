@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>Cluster data analysis</title>
+    <link rel="stylesheet" href="/static/main.css">
+</head>
+<body>
+<div id="btn-bar">
+    <div style="height: 2em">
+        <label for="distId" style="line-height: 2em; color: #d5d0ce; margin-right: .5em;">Metric: </label>
+        <select id="distId">
+            <option value="1">Euclidean</option>
+            <option value="2">Manhattan</option>
+            <option value="3">Chebyshev</option>
+        </select>
+    </div>
+    <div style="height: 2em">
+        <label for="maxAge" style="line-height: 2em; color: #d5d0ce; margin-right: .5em;">Max epochs: </label>
+        <input type="number" id="maxAge" value="100" style="width: 4em; text-align: center;">
+    </div>
+    <a onclick="train(Number($('#distId').val()), true, Number($('#maxAge').val()));">Train step by step</a>
+    <a onclick="train(Number($('#distId').val()), false, Number($('#maxAge').val()));">Train</a>
+    <a onclick="addTestData();">Add Test Data</a>
+    <a onclick="clearArea();">Clear</a>
+</div>
+<div id="canvases">
+    <canvas id="canvas"></canvas>
+</div>
+<script src="/static/jquery-3.4.1.min.js"></script>
+<script src="/static/window.js"></script>
+<script src="/static/api.js"></script>
+<script src="/static/cluster.js"></script>
+</body>
+</html>
